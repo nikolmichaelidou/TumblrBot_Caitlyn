@@ -60,9 +60,8 @@ def like_and_reblog_posts():
                     client.reblog('your-blog-name', id=post['id'], reblog_key=post['reblog_key'])
                 except Exception as e:
                     print(f"An error occurred while reblogging post with id '{post['id']}': {e}")
-                client.like(post_id=post['id'], reblog_key=post['reblog_key'])
-                # Reblog the post
-                client.reblog('your-blog-name', id=post['id'], reblog_key=post['reblog_key'])
+            except Exception as e:
+                print(f"An error occurred while liking post with id '{post['id']}': {e}")
         except Exception as e:
             print(f"An error occurred while fetching or processing posts for tag '{tag}': {e}")
 
