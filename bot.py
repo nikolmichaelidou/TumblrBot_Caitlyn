@@ -4,9 +4,10 @@ This script uses the pytumblr library to interact with the Tumblr API and automa
 
 Functions:
     post_content(): Creates a text post on the specified Tumblr blog with a daily update message.
+    like_and_reblog_posts(): Automatically likes and reblogs posts with specified tags.
 
 Scheduled Tasks:
-    The script schedules the post_content function to run every 8 hours.
+    The script schedules both post_content and like_and_reblog_posts functions to run every 8 hours.
 
 Modules:
     pytumblr: Provides the TumblrRestClient class to interact with the Tumblr API.
