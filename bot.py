@@ -42,7 +42,7 @@ def post_content():
     try:
         content = {
             'title': 'Daily Caitlyn Kiramman Update',
-            'body': 'Here's your daily dose of Caitlyn content!',
+            'body': 'Here is your daily dose of Caitlyn content!',
             'state': 'published',
             'tags': ['Caitlyn Kiramman', 'Arcane', 'League of Legends']
         }
