@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 from time import sleep
 from random import randint
+from typing import Callable, Any, List, Dict
 
 # Load environment variables
 load_dotenv()
@@ -25,7 +26,18 @@ client = TumblrRestClient(
     os.getenv('TOKEN_SECRET')
 )
 
-def retry_with_backoff(func, max_retries=3):
+def validate_config() -> None:
+    """Validate required environment variables"""
+    required_vars = ['API_KEY', 'API_SECRET', 'TOKEN', 'TOKEN_SECRET', 'BLOG_NAME']
+    missing = [var for var in required_vars if not os.getenv(var)]
+    if missing:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+
+def rate_limit(seconds: int = 1) -> None:
+    """Generic rate limiting function"""
+    sleep(seconds + randint(0, 1))
+
+def retry_with_backoff(func: Callable[[], Any], max_retries: int = 3) -> Any:
     """Retry function with exponential backoff"""
     for i in range(max_retries):
         try:
@@ -37,14 +49,14 @@ def retry_with_backoff(func, max_retries=3):
             logging.warning(f"Attempt {i+1} failed, retrying in {sleep_time} seconds...")
             sleep(sleep_time)
 
-def post_content():
+def post_content() -> None:
     """Post content with retry mechanism"""
     try:
         content = {
-            'title': 'Daily Caitlyn Kiramman Update',
-            'body': 'Here is your daily dose of Caitlyn content!',
-            'state': 'published',
-            'tags': ['Caitlyn Kiramman', 'Arcane', 'League of Legends']
+            'title': os.getenv('DEFAULT_TITLE', 'Daily Caitlyn Kiramman Update'),
+            'body': os.getenv('DEFAULT_BODY', 'Here is your daily dose of Caitlyn content!'),
+            'state': os.getenv('POST_STATE', 'published'),
+            'tags': os.getenv('POST_TAGS', '').split(',')
         }
         
         def post():
@@ -58,21 +70,21 @@ def post_content():
     except Exception as e:
         logging.error('Error posting content', exc_info=True)
 
-def like_and_reblog_posts(limit=5):
+def like_and_reblog_posts(limit: int = 5) -> None:
     """Like and reblog posts with rate limiting"""
-    search_tags = ['Arcane', 'Caitlyn', 'Caitlyn Kiramman', 'League of Legends', 'Caitvi']
+    search_tags = os.getenv('SEARCH_TAGS', '').split(',')
     for tag in search_tags:
         try:
             posts = client.tagged(tag, limit=limit)
             for post in posts:
-                sleep(1)  # Rate limiting
+                rate_limit()  # Rate limiting
                 try:
                     retry_with_backoff(
                         lambda: client.like(post_id=post['id'], reblog_key=post['reblog_key'])
                     )
                     logging.info(f"Liked post {post['id']}")
                     
-                    sleep(1)  # Rate limiting between actions
+                    rate_limit()  # Rate limiting between actions
                     
                     retry_with_backoff(
                         lambda: client.reblog(os.getenv('BLOG_NAME'), id=post['id'], 
@@ -89,15 +101,21 @@ schedule.every(8).hours.do(post_content)
 schedule.every(4).hours.do(like_and_reblog_posts, limit=5)
 
 # Main loop with error handling
-def main():
-    logging.info("Bot started successfully")
-    while True:
-        try:
-            schedule.run_pending()
-            sleep(60)
-        except Exception as e:
-            logging.error("Error in main loop", exc_info=True)
-            sleep(300)  # Wait 5 minutes on error
+def main() -> None:
+    try:
+        validate_config()
+        logging.info("Configuration validated successfully")
+        logging.info("Bot started successfully")
+        while True:
+            try:
+                schedule.run_pending()
+                sleep(60)
+            except Exception as e:
+                logging.error("Error in main loop", exc_info=True)
+                sleep(300)  # Wait 5 minutes on error
+    except ValueError as e:
+        logging.error(f"Configuration error: {e}")
+        exit(1)
 
 if __name__ == "__main__":
     main()
