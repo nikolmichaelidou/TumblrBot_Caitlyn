@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "name": "Launch bot.py",
+      "program": "${workspaceFolder}/${input:programPath}",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal"
+    }
+  ],
+  "inputs": [
+    {
+      "type": "pickString",
+      "id": "programPath",
+      "description": "Select the Python file to debug",
+      "options": [
+        "bot.py",
+        "config.py"
+      ]
+    }
+  ]
+}
