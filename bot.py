@@ -96,16 +96,21 @@ def like_and_reblog_posts(limit: int = 5) -> None:
         except Exception as e:
             logging.error(f"Error fetching posts for tag '{tag}'", exc_info=True)
 
-# Schedule tasks with proper intervals
-schedule.every(8).hours.do(post_content)
-schedule.every(4).hours.do(like_and_reblog_posts, limit=5)
+def schedule_posts():
+    """Schedule posts every 4 hours with slight random variation"""
+    post_times = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"]
+    for time in post_times:
+        # Add random minutes (0-15) to vary posting time
+        minutes = randint(0, 15)
+        schedule.every().day.at(f"{time}:{minutes:02d}").do(post_content)
+        logging.info(f"Scheduled post for {time}:{minutes:02d}")
 
-# Main loop with error handling
 def main() -> None:
     try:
         validate_config()
         logging.info("Configuration validated successfully")
         logging.info("Bot started successfully")
+        schedule_posts()
         while True:
             try:
                 schedule.run_pending()
